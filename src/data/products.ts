@@ -47,7 +47,7 @@ export const products: Product[] = [
     storageConditions: "Store below 25°C in a dry place, protected from direct sunlight",
     shelfLife: "24 months from date of manufacture",
     certifications: ["GMP", "WHO-GMP"],
-    image: "/images/products/Ramiba-DSR.png",
+    image: "/images/products/Ramiba-DSR.jpg",
     relatedSlugs: ["prazmo-d"],
   },
   {
@@ -64,7 +64,7 @@ export const products: Product[] = [
     storageConditions: "Store in a cool and dry place, away from moisture",
     shelfLife: "24 months from date of manufacture",
     certifications: ["GMP", "WHO-GMP", "CDSCO Approved"],
-    image: "/images/products/Prazmo-D.png",
+    image: "/images/products/Prazmo-D.jpg",
     relatedSlugs: ["ramiba-dsr"],
   },
   {
@@ -149,7 +149,7 @@ export const products: Product[] = [
     storageConditions: "Store below 25°C in a dry place, protected from light",
     shelfLife: "18 months from date of manufacture",
     certifications: ["GMP"],
-    image: "/images/products/Amifolic.png",
+    image: "/images/products/Amifolic.jpg",
     relatedSlugs: ["mb-gold"],
   },
   {
