@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://amiba.in"), // TODO: Replace with production domain
+  metadataBase: new URL("https://www.amibapharmaceuticals.com"),
   alternates: {
     canonical: "./",
   },
@@ -80,8 +80,8 @@ const organizationSchema = {
   name: "AMIBA Healthcare",
   description:
     "B2B pharmaceutical wholesaler supplying GMP-certified medicines and medical supplies across India.",
-  url: "https://amiba.in",
-  logo: "https://amiba.in/images/og-image.jpg",
+  url: "https://www.amibapharmaceuticals.com",
+  logo: "https://www.amibapharmaceuticals.com/images/og-image.jpg",
   contactPoint: {
     "@type": "ContactPoint",
     telephone: "+91-94340-71541",

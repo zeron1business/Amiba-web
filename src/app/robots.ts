@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export const dynamic = "force-static";
 
-const BASE_URL = "https://amiba.in"; // TODO: Replace with production domain
+const BASE_URL = "https://www.amibapharmaceuticals.com";
 
 export default function robots(): MetadataRoute.Robots {
   return {
