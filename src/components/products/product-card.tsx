@@ -70,7 +70,8 @@ export function ProductCard({ product }: ProductCardProps) {
                   alt={product.name}
                   className="w-full h-full"
                   imageClassName="object-cover group-hover:scale-105 transition-transform duration-500"
-                  autoPlay={false}
+                  autoPlay={true}
+                  interval={3000}
                 />
               ) : product.image ? (
                 <Image

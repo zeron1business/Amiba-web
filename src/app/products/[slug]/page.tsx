@@ -130,6 +130,8 @@ export default async function ProductDetailPage({
                       alt={product.name}
                       className="w-full h-full"
                       imageClassName="object-cover"
+                      autoPlay={true}
+                      interval={4000}
                     />
                   ) : product.image ? (
                     <Image

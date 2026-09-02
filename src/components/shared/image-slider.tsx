@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Package } from "lucide-react";
@@ -18,31 +18,50 @@ interface ImageSliderProps {
 export function ImageSlider({
   images,
   alt,
-  autoPlay = false,
-  interval = 4000,
+  autoPlay = true,
+  interval = 3500,
   className = "",
   imageClassName = "",
 }: ImageSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
   const [isHovered, setIsHovered] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleNext = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
+  const handleNext = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e) e.preventDefault();
+      setDirection(1);
+      setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    },
+    [images.length]
+  );
 
-  const handlePrev = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
+  const handlePrev = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e) e.preventDefault();
+      setDirection(-1);
+      setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    },
+    [images.length]
+  );
 
+  // Auto-play with smooth transitions
   useEffect(() => {
-    if (!autoPlay || images.length <= 1 || isHovered) return;
-    const timer = setInterval(() => {
+    if (!autoPlay || images.length <= 1 || isHovered) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      setDirection(1);
       setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
     }, interval);
-    return () => clearInterval(timer);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [autoPlay, images.length, isHovered, interval]);
 
   if (!images || images.length === 0) {
@@ -61,19 +80,50 @@ export function ImageSlider({
     );
   }
 
+  // Smooth sliding variants
+  const slideVariants = prefersReducedMotion
+    ? {
+        enter: { opacity: 0 },
+        center: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : {
+        enter: (dir: number) => ({
+          x: dir > 0 ? "100%" : "-100%",
+          opacity: 0,
+          scale: 0.95,
+        }),
+        center: {
+          x: 0,
+          opacity: 1,
+          scale: 1,
+        },
+        exit: (dir: number) => ({
+          x: dir > 0 ? "-100%" : "100%",
+          opacity: 0,
+          scale: 0.95,
+        }),
+      };
+
   return (
     <div
       className={`relative overflow-hidden group/slider ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout" custom={direction}>
         <motion.div
           key={currentIndex}
-          initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{
+            x: { type: "spring", stiffness: 300, damping: 35, mass: 0.8 },
+            opacity: { duration: 0.35, ease: "easeInOut" },
+            scale: { duration: 0.35, ease: "easeInOut" },
+          }}
           className="absolute inset-0"
         >
           <Image
@@ -85,37 +135,56 @@ export function ImageSlider({
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation Arrows */}
-      <div className="absolute inset-0 flex items-center justify-between p-2 opacity-0 group-hover/slider:opacity-100 transition-opacity z-10 pointer-events-none">
+      {/* Navigation Arrows — show on hover */}
+      <div className="absolute inset-0 flex items-center justify-between p-2 opacity-0 group-hover/slider:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
         <button
           onClick={handlePrev}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-paper/80 text-ink shadow hover:bg-paper pointer-events-auto transition-transform active:scale-95"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-paper/90 text-ink shadow-md hover:bg-paper hover:shadow-lg pointer-events-auto transition-all active:scale-90 backdrop-blur-sm"
           aria-label="Previous image"
         >
           <ChevronLeft size={16} />
         </button>
         <button
           onClick={handleNext}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-paper/80 text-ink shadow hover:bg-paper pointer-events-auto transition-transform active:scale-95"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-paper/90 text-ink shadow-md hover:bg-paper hover:shadow-lg pointer-events-auto transition-all active:scale-90 backdrop-blur-sm"
           aria-label="Next image"
         >
           <ChevronRight size={16} />
         </button>
       </div>
 
-      {/* Dots */}
+      {/* Slide indicator dots */}
       <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
         {images.map((_, i) => (
-          <div
+          <button
             key={i}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
+            onClick={(e) => {
+              e.preventDefault();
+              setDirection(i > currentIndex ? 1 : -1);
+              setCurrentIndex(i);
+            }}
+            className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
               i === currentIndex
-                ? "w-4 bg-signal-teal"
-                : "w-1.5 bg-slate/30"
+                ? "w-5 bg-signal-teal shadow-[0_0_8px_rgba(0,178,160,0.4)]"
+                : "w-1.5 bg-slate/30 hover:bg-slate/50"
             }`}
+            aria-label={`View image ${i + 1}`}
           />
         ))}
       </div>
+
+      {/* Subtle progress bar for auto-play */}
+      {autoPlay && !isHovered && (
+        <div className="absolute top-0 left-0 right-0 h-0.5 z-10">
+          <motion.div
+            key={`progress-${currentIndex}`}
+            className="h-full bg-signal-teal/50"
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: interval / 1000, ease: "linear" }}
+          />
+        </div>
+      )}
     </div>
   );
 }
