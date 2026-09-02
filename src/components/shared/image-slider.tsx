@@ -28,10 +28,14 @@ export function ImageSlider({
   const [isHovered, setIsHovered] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const handleNext = useCallback(
     (e?: React.MouseEvent) => {
-      if (e) e.preventDefault();
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       setDirection(1);
       setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
     },
@@ -40,12 +44,33 @@ export function ImageSlider({
 
   const handlePrev = useCallback(
     (e?: React.MouseEvent) => {
-      if (e) e.preventDefault();
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       setDirection(-1);
       setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
     },
     [images.length]
   );
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    }
+    touchStartX.current = null;
+  };
 
   // Auto-play with smooth transitions
   useEffect(() => {
@@ -110,6 +135,8 @@ export function ImageSlider({
       className={`relative overflow-hidden group/slider ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <AnimatePresence mode="popLayout" custom={direction}>
         <motion.div
@@ -135,21 +162,23 @@ export function ImageSlider({
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation Arrows — show on hover */}
-      <div className="absolute inset-0 flex items-center justify-between p-2 opacity-0 group-hover/slider:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
+      {/* Navigation Arrows — always visible on mobile, hover on desktop */}
+      <div className="absolute inset-0 flex items-center justify-between p-2 sm:p-3 opacity-100 sm:opacity-0 sm:group-hover/slider:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
         <button
+          type="button"
           onClick={handlePrev}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-paper/90 text-ink shadow-md hover:bg-paper hover:shadow-lg pointer-events-auto transition-all active:scale-90 backdrop-blur-sm"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-ink shadow-md hover:bg-white hover:shadow-lg pointer-events-auto transition-all active:scale-90 backdrop-blur-sm border border-mist/80"
           aria-label="Previous image"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={18} />
         </button>
         <button
+          type="button"
           onClick={handleNext}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-paper/90 text-ink shadow-md hover:bg-paper hover:shadow-lg pointer-events-auto transition-all active:scale-90 backdrop-blur-sm"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-ink shadow-md hover:bg-white hover:shadow-lg pointer-events-auto transition-all active:scale-90 backdrop-blur-sm border border-mist/80"
           aria-label="Next image"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={18} />
         </button>
       </div>
 
@@ -158,15 +187,17 @@ export function ImageSlider({
         {images.map((_, i) => (
           <button
             key={i}
+            type="button"
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setDirection(i > currentIndex ? 1 : -1);
               setCurrentIndex(i);
             }}
             className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
               i === currentIndex
                 ? "w-5 bg-signal-teal shadow-[0_0_8px_rgba(0,178,160,0.4)]"
-                : "w-1.5 bg-slate/30 hover:bg-slate/50"
+                : "w-1.5 bg-slate/40 hover:bg-slate/60"
             }`}
             aria-label={`View image ${i + 1}`}
           />
