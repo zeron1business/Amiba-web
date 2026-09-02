@@ -40,6 +40,15 @@ export const metadata: Metadata = {
   },
   description:
     "AMIBA is India's trusted B2B pharmaceutical wholesaler supplying GMP-certified medicines, surgical consumables, and medical devices to hospitals, pharmacies, and healthcare institutions.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", type: "image/png", sizes: "180x180" },
+    ],
+  },
   keywords: [
     "B2B pharma",
     "pharmaceutical wholesaler",
