@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     "AMIBA is India's trusted B2B pharmaceutical wholesaler supplying GMP-certified medicines, surgical consumables, and medical devices to hospitals, pharmacies, and healthcare institutions.",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.ico", sizes: "48x48" },
       { url: "/icon.png", type: "image/png", sizes: "512x512" },
     ],
     apple: [
@@ -90,7 +90,7 @@ const organizationSchema = {
   description:
     "B2B pharmaceutical wholesaler supplying GMP-certified medicines and medical supplies across India.",
   url: "https://www.amibapharmaceuticals.com",
-  logo: "https://www.amibapharmaceuticals.com/images/og-image.jpg",
+  logo: "https://www.amibapharmaceuticals.com/images/logo.png",
   contactPoint: {
     "@type": "ContactPoint",
     telephone: "+91-94340-71541",
