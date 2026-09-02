@@ -37,13 +37,45 @@ export async function generateMetadata({
     return { title: "Product Not Found" };
   }
 
+  const title = `${product.name} — ${product.composition.split(" ").slice(0, 6).join(" ")} | AMIBA Pharmaceuticals`;
+  const description = `${product.shortDescription} ${product.composition}. Pack size: ${product.packSize}. ${product.certifications.join(", ")} certified. Available for B2B wholesale from AMIBA Healthcare India.`;
+
   return {
-    title: product.name,
-    description: product.shortDescription,
+    title,
+    description,
+    alternates: {
+      canonical: `/products/${product.slug}`,
+    },
+    keywords: [
+      product.name,
+      product.category,
+      ...product.composition.split("+").map((c) => c.trim()),
+      "B2B pharma India",
+      "wholesale pharmaceutical",
+      "AMIBA Healthcare",
+      ...product.certifications,
+    ],
     openGraph: {
-      title: `${product.name} | AMIBA`,
+      title,
       description: product.shortDescription,
       type: "website",
+      url: `/products/${product.slug}`,
+      images: product.image
+        ? [
+            {
+              url: product.image,
+              width: 800,
+              height: 800,
+              alt: `${product.name} — ${product.composition}`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.name} | AMIBA`,
+      description: product.shortDescription,
+      images: product.image ? [product.image] : undefined,
     },
   };
 }
@@ -69,16 +101,96 @@ export default async function ProductDetailPage({
 
   const related = getRelatedProducts(product);
 
+  const productImages = product.variants
+    ? product.variants.map(
+        (v) => `https://www.amibapharmaceuticals.com${v.image}`
+      )
+    : product.image
+      ? [`https://www.amibapharmaceuticals.com${product.image}`]
+      : [];
+
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: product.shortDescription,
+    description: product.longDescription,
+    image: productImages,
+    url: `https://www.amibapharmaceuticals.com/products/${product.slug}`,
     category: product.category,
     brand: {
       "@type": "Brand",
       name: "AMIBA Healthcare",
     },
+    manufacturer: {
+      "@type": "Organization",
+      name: "AMIBA Healthcare",
+      url: "https://www.amibapharmaceuticals.com",
+    },
+    offers: {
+      "@type": "Offer",
+      availability: "https://schema.org/InStock",
+      priceCurrency: "INR",
+      seller: {
+        "@type": "Organization",
+        name: "AMIBA Healthcare",
+      },
+      eligibleRegion: {
+        "@type": "Place",
+        name: "India",
+      },
+    },
+    additionalProperty: [
+      {
+        "@type": "PropertyValue",
+        name: "Composition",
+        value: product.composition,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Pack Size",
+        value: product.packSize,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Certifications",
+        value: product.certifications.join(", "),
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Storage Conditions",
+        value: product.storageConditions,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Shelf Life",
+        value: product.shelfLife,
+      },
+    ],
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://www.amibapharmaceuticals.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Products",
+        item: "https://www.amibapharmaceuticals.com/products",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.name,
+        item: `https://www.amibapharmaceuticals.com/products/${product.slug}`,
+      },
+    ],
   };
 
   const specs = [
@@ -99,6 +211,12 @@ export default async function ProductDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(productSchema),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbSchema),
         }}
       />
 
