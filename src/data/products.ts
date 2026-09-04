@@ -98,12 +98,12 @@ export const products: Product[] = [
     storageConditions: "Store below 30°C in a dry place, protected from light",
     shelfLife: "36 months from date of manufacture",
     certifications: ["GMP", "WHO-GMP", "CDSCO Approved"],
-    image: "/images/products/ibator10.jpeg",
+    image: "/images/products/ibator10.png",
     variants: [
       {
         name: "Ibator 10",
         composition: "Atorvastatin Tablets I.P. 10 mg",
-        image: "/images/products/ibator10.jpeg",
+        image: "/images/products/ibator10.png",
       },
       {
         name: "Ibator 20",
