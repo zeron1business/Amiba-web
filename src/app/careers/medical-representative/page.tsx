@@ -82,9 +82,8 @@ export default function JobDescriptionPage() {
                 Fill out our application form with your details and upload your resume. We'll be in touch with shortlisted candidates.
               </p>
               
-              {/* TODO: REPLACE '#' WITH THE ACTUAL GOOGLE FORM LINK */}
               <a 
-                href="#" 
+                href="https://docs.google.com/forms/d/e/1FAIpQLSee0R27KoByxJNLk0Ctaup7oW61T4gOJ3pXY1d3nL1GeYjwOA/viewform?usp=publish-editor" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center bg-signal-teal text-white font-medium rounded-full px-8 py-3.5 hover:bg-signal-teal/90 transition-all gap-2 hover:-translate-y-0.5 active:translate-y-0"
