@@ -191,7 +191,7 @@ export default function ContactPage() {
       `Phone: ${formData.phone || "N/A"}\n` +
       `Drug License No.: ${formData.drug_license || "Not provided"}\n` +
       `GST No.: ${formData.gst_number || "Not provided"}\n` +
-      `Products of Interest: ${selectedProducts.length > 0 ? selectedProducts.join(", ") : "General Enquiry"}\n\n` +
+      `Products of Interest:\n${selectedProducts.length > 0 ? selectedProducts.map((p) => `• ${p}`).join("\n") : "General Enquiry"}\n\n` +
       `Message / Requirements:\n${formData.message || "None provided"}\n`
     );
     return `mailto:contact@amibapharmaceuticals.com?subject=${subject}&body=${body}`;
@@ -223,7 +223,10 @@ export default function ContactPage() {
       "Phone": formData.phone,
       "Drug License No": formData.drug_license.trim() || "Not provided",
       "GST No": formData.gst_number.trim() || "Not provided",
-      "Products of Interest": selectedProducts.join(", "),
+      "Products of Interest":
+        selectedProducts.length > 0
+          ? selectedProducts.join(",\n")
+          : "General Enquiry",
       "Message": formData.message.trim() || "No additional comments",
       _replyto: formData.email,
       _subject: `New Institutional Quote Request: ${formData.company_name} (${formData.contact_person})`,
