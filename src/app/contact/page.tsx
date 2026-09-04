@@ -10,11 +10,24 @@ import {
   Clock,
   Send,
   CheckCircle2,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [formData, setFormData] = useState({
+    company_name: "",
+    contact_person: "",
+    drug_license: "",
+    gst_number: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
 
   const toggleProduct = (name: string) => {
     setSelectedProducts((prev) =>
@@ -22,31 +35,84 @@ export default function ContactPage() {
     );
   };
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const constructMailtoUrl = () => {
+    const subject = encodeURIComponent(
+      `Quote Request from ${formData.company_name || "Institutional Client"}`
+    );
+    const body = encodeURIComponent(
+      `AMIBA Pharmaceuticals Quote Request\n` +
+      `----------------------------------------\n` +
+      `Company Name: ${formData.company_name || "N/A"}\n` +
+      `Contact Person: ${formData.contact_person || "N/A"}\n` +
+      `Email: ${formData.email || "N/A"}\n` +
+      `Phone: ${formData.phone || "N/A"}\n` +
+      `Drug License No.: ${formData.drug_license || "Not provided"}\n` +
+      `GST No.: ${formData.gst_number || "Not provided"}\n` +
+      `Products of Interest: ${selectedProducts.length > 0 ? selectedProducts.join(", ") : "General Enquiry / All Products"}\n\n` +
+      `Message / Requirements:\n${formData.message || "None provided"}\n`
+    );
+    return `mailto:contact@amibapharmaceuticals.com?subject=${subject}&body=${body}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    formData.append("products_of_interest", selectedProducts.join(", "));
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    const payload = {
+      "Company Name": formData.company_name,
+      "Contact Person": formData.contact_person,
+      "Email": formData.email,
+      "Phone": formData.phone,
+      "Drug License No": formData.drug_license || "Not provided",
+      "GST No": formData.gst_number || "Not provided",
+      "Products of Interest":
+        selectedProducts.length > 0
+          ? selectedProducts.join(", ")
+          : "General Enquiry / All Products",
+      "Message": formData.message || "No additional comments",
+      _replyto: formData.email,
+      _subject: `New Institutional Quote Request: ${formData.company_name} (${formData.contact_person})`,
+      _template: "table",
+      _captcha: "false",
+    };
 
     try {
-      /* 
-       * TODO: REPLACE — Configure with your Web3Forms access key
-       * Sign up at https://web3forms.com to get a free access key.
-       * Replace 'YOUR_ACCESS_KEY' below with the real key.
-       */
-      formData.append("access_key", "YOUR_ACCESS_KEY");
-      
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://formsubmit.co/ajax/contact@amibapharmaceuticals.com",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (response.ok && (result.success === "true" || result.success === true)) {
         setSubmitted(true);
+      } else if (result.message && result.message.includes("Activation")) {
+        // FormSubmit sent the one-time activation confirmation to contact@amibapharmaceuticals.com
+        setSubmitted(true);
+      } else {
+        throw new Error(result.message || "Failed to submit form.");
       }
     } catch {
-      // Fallback: just show success for demo
-      setSubmitted(true);
+      setErrorMessage(
+        "We could not send your request automatically. You can email us directly with all your details using the button below."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -59,7 +125,8 @@ export default function ContactPage() {
           </div>
           <h1 className="text-display-lg text-ink mb-4">Quote request received</h1>
           <p className="text-body-lg text-slate mb-8">
-            Thank you for your interest. Our team will review your request and
+            Thank you for your interest. All details have been sent directly to our team at{" "}
+            <span className="font-semibold text-ink">contact@amibapharmaceuticals.com</span>. We will review your request and
             respond within 24 hours with institutional pricing and next steps.
           </p>
           <a href="/" className="btn-capsule btn-teal">
@@ -94,6 +161,22 @@ export default function ContactPage() {
             <div className="lg:col-span-3">
               <SectionReveal>
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {errorMessage && (
+                    <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex flex-col gap-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                        <p>{errorMessage}</p>
+                      </div>
+                      <a
+                        href={constructMailtoUrl()}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white font-medium text-xs hover:bg-red-700 transition-colors w-fit"
+                      >
+                        <Mail size={14} />
+                        Send via Email App
+                      </a>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <label
@@ -107,6 +190,8 @@ export default function ContactPage() {
                         id="company_name"
                         name="company_name"
                         required
+                        value={formData.company_name}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
                         placeholder="Your institution name"
                       />
@@ -123,6 +208,8 @@ export default function ContactPage() {
                         id="contact_person"
                         name="contact_person"
                         required
+                        value={formData.contact_person}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
                         placeholder="Full name"
                       />
@@ -135,13 +222,17 @@ export default function ContactPage() {
                         htmlFor="drug_license"
                         className="block text-sm font-medium text-ink mb-2"
                       >
-                        Drug License No. *
+                        Drug License No.{" "}
+                        <span className="text-slate/60 text-xs font-normal">
+                          (Optional)
+                        </span>
                       </label>
                       <input
                         type="text"
                         id="drug_license"
                         name="drug_license"
-                        required
+                        value={formData.drug_license}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
                         placeholder="e.g., XX-XXXXX"
                       />
@@ -151,13 +242,17 @@ export default function ContactPage() {
                         htmlFor="gst_number"
                         className="block text-sm font-medium text-ink mb-2"
                       >
-                        GST No. *
+                        GST No.{" "}
+                        <span className="text-slate/60 text-xs font-normal">
+                          (Optional)
+                        </span>
                       </label>
                       <input
                         type="text"
                         id="gst_number"
                         name="gst_number"
-                        required
+                        value={formData.gst_number}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
                         placeholder="e.g., 27XXXXXXXXX1Z5"
                       />
@@ -177,6 +272,8 @@ export default function ContactPage() {
                         id="email"
                         name="email"
                         required
+                        value={formData.email}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
                         placeholder="procurement@hospital.com"
                       />
@@ -193,6 +290,8 @@ export default function ContactPage() {
                         id="phone"
                         name="phone"
                         required
+                        value={formData.phone}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
                         placeholder="+91 XXXXX XXXXX"
                       />
@@ -233,6 +332,8 @@ export default function ContactPage() {
                       id="message"
                       name="message"
                       rows={4}
+                      value={formData.message}
+                      onChange={handleInputChange}
                       className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors resize-none"
                       placeholder="Tell us about your requirements, estimated volumes, or any specific questions..."
                     />
@@ -246,20 +347,30 @@ export default function ContactPage() {
 
                   <button
                     type="submit"
-                    className="btn-capsule btn-primary w-full sm:w-auto inline-flex items-center gap-2"
+                    disabled={isSubmitting}
+                    className="btn-capsule btn-primary w-full sm:w-auto inline-flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    <Send size={18} />
-                    Submit Quote Request
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Sending Request...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={18} />
+                        Submit Quote Request
+                      </>
+                    )}
                   </button>
 
                   {/* Mailto fallback */}
                   <p className="text-xs text-slate mt-4">
                     Form not working?{" "}
                     <a
-                      href="mailto:mrigankamandalamiba@gmail.com?subject=Quote%20Request"
+                      href={constructMailtoUrl()}
                       className="text-signal-teal hover:underline"
                     >
-                      Email us directly at mrigankamandalamiba@gmail.com
+                      Email us directly at contact@amibapharmaceuticals.com
                     </a>
                   </p>
                 </form>
@@ -310,10 +421,10 @@ export default function ContactPage() {
                       <div>
                         <p className="text-sm font-medium text-ink">Email</p>
                         <a
-                          href="mailto:mrigankamandalamiba@gmail.com"
+                          href="mailto:contact@amibapharmaceuticals.com"
                           className="text-sm text-slate hover:text-signal-teal transition-colors"
                         >
-                          mrigankamandalamiba@gmail.com
+                          contact@amibapharmaceuticals.com
                         </a>
                       </div>
                     </li>

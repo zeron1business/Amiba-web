@@ -123,10 +123,10 @@ export function Footer() {
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-signal-teal flex-shrink-0" />
                 <a
-                  href="mailto:mrigankamandalamiba@gmail.com"
+                  href="mailto:contact@amibapharmaceuticals.com"
                   className="text-sm text-white/60 hover:text-signal-teal transition-colors"
                 >
-                  mrigankamandalamiba@gmail.com
+                  contact@amibapharmaceuticals.com
                 </a>
               </li>
             </ul>

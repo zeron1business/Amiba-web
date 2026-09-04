@@ -75,8 +75,8 @@ export default function PrivacyPage() {
             <h2 className="text-display-md !text-xl text-ink mb-3">7. Contact Us</h2>
             <p className="text-body text-slate leading-relaxed">
               For any privacy-related questions or requests, please contact us at:{" "}
-              <a href="mailto:mrigankamandalamiba@gmail.com" className="text-signal-teal hover:underline">
-                mrigankamandalamiba@gmail.com
+              <a href="mailto:contact@amibapharmaceuticals.com" className="text-signal-teal hover:underline">
+                contact@amibapharmaceuticals.com
               </a>
             </p>
           </div>
