@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function JobDescriptionPage() {
   return (
-    <div className="pt-24 sm:pt-32 pb-16 sm:pb-24 bg-paper min-h-screen">
+    <div className="pt-10 sm:pt-16 pb-16 sm:pb-24 bg-paper min-h-screen">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionReveal>
           {/* Breadcrumb / Back */}

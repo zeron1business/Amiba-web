@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function BoardOfDirectorsPage() {
   return (
     <>
-      <section className="pt-24 sm:pt-32 pb-16 sm:pb-20 bg-paper min-h-screen flex flex-col">
+      <section className="pt-10 sm:pt-16 pb-16 sm:pb-20 bg-paper min-h-screen flex flex-col">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-grow w-full">
           <SectionReveal>
             <div className="text-center mb-16">

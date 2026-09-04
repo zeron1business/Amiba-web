@@ -14,11 +14,116 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+interface FormErrors {
+  company_name?: string;
+  contact_person?: string;
+  drug_license?: string;
+  gst_number?: string;
+  email?: string;
+  phone?: string;
+  products?: string;
+  message?: string;
+}
+
+function validateForm(
+  data: {
+    company_name: string;
+    contact_person: string;
+    drug_license: string;
+    gst_number: string;
+    email: string;
+    phone: string;
+    message: string;
+  },
+  selectedProds: string[]
+): FormErrors {
+  const errors: FormErrors = {};
+
+  // Company Name validation
+  const trimmedCompany = data.company_name.trim();
+  if (!trimmedCompany) {
+    errors.company_name = "Company or institution name is required.";
+  } else if (trimmedCompany.length < 2) {
+    errors.company_name = "Company name must be at least 2 characters.";
+  }
+
+  // Contact Person validation
+  const trimmedPerson = data.contact_person.trim();
+  if (!trimmedPerson) {
+    errors.contact_person = "Contact person name is required.";
+  } else if (trimmedPerson.length < 2) {
+    errors.contact_person = "Contact person name must be at least 2 characters.";
+  } else if (!/^[a-zA-Z\s.'-]+$/.test(trimmedPerson)) {
+    errors.contact_person = "Name should contain only letters and spaces.";
+  }
+
+  // Drug License No. validation (Optional, but if filled must be valid)
+  const trimmedDL = data.drug_license.trim();
+  if (trimmedDL) {
+    if (trimmedDL.length < 3 || trimmedDL.length > 40) {
+      errors.drug_license = "Drug License number should be between 3 and 40 characters.";
+    } else if (!/^[a-zA-Z0-9\/\-,\s]+$/.test(trimmedDL)) {
+      errors.drug_license = "Drug License contains invalid characters.";
+    }
+  }
+
+  // GST No. validation (Optional, but if filled must match GSTIN format)
+  const trimmedGST = data.gst_number.trim();
+  if (trimmedGST) {
+    const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i;
+    if (!gstPattern.test(trimmedGST)) {
+      errors.gst_number = "Please enter a valid 15-character GSTIN (e.g., 27ABCDE1234F1Z5).";
+    }
+  }
+
+  // Email validation
+  const trimmedEmail = data.email.trim();
+  const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!trimmedEmail) {
+    errors.email = "Business email address is required.";
+  } else if (!emailPattern.test(trimmedEmail)) {
+    errors.email = "Please enter a valid email address (e.g., name@domain.com).";
+  }
+
+  // Phone validation
+  const trimmedPhone = data.phone.trim();
+  const cleanPhone = trimmedPhone.replace(/[\s\-\(\)\+]/g, "");
+  const normalizedPhone =
+    cleanPhone.startsWith("91") && cleanPhone.length === 12
+      ? cleanPhone.slice(2)
+      : cleanPhone.startsWith("0") && cleanPhone.length === 11
+      ? cleanPhone.slice(1)
+      : cleanPhone;
+
+  if (!trimmedPhone) {
+    errors.phone = "Contact phone number is required.";
+  } else if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
+    errors.phone = "Please enter a valid 10-digit mobile number (e.g., 9876543210).";
+  }
+
+  // Products of interest validation
+  if (selectedProds.length === 0) {
+    errors.products = "Please select at least one product of interest.";
+  }
+
+  // Message validation (Optional, but if filled must be reasonable length)
+  const trimmedMessage = data.message.trim();
+  if (trimmedMessage && trimmedMessage.length < 5) {
+    errors.message = "Message must be at least 5 characters.";
+  }
+
+  return errors;
+}
+
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittedAttempted, setIsSubmittedAttempted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   const [formData, setFormData] = useState({
     company_name: "",
     contact_person: "",
@@ -30,16 +135,47 @@ export default function ContactPage() {
   });
 
   const toggleProduct = (name: string) => {
-    setSelectedProducts((prev) =>
-      prev.includes(name) ? prev.filter((p) => p !== name) : [...prev, name]
-    );
+    const nextProducts = selectedProducts.includes(name)
+      ? selectedProducts.filter((p) => p !== name)
+      : [...selectedProducts, name];
+    setSelectedProducts(nextProducts);
+
+    if (touched.products || isSubmittedAttempted) {
+      const validationErrors = validateForm(formData, nextProducts);
+      setErrors(validationErrors);
+    }
   };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const updatedForm = { ...formData, [name]: value };
+    setFormData(updatedForm);
+
+    if (touched[name] || isSubmittedAttempted) {
+      const validationErrors = validateForm(updatedForm, selectedProducts);
+      setErrors(validationErrors);
+    }
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const validationErrors = validateForm(formData, selectedProducts);
+    setErrors(validationErrors);
+  };
+
+  const showError = (field: keyof FormErrors) => {
+    return (touched[field] || isSubmittedAttempted) && errors[field];
+  };
+
+  const getInputClassName = (field: keyof FormErrors) => {
+    const hasError = showError(field);
+    return `w-full px-4 py-3 rounded-xl border transition-colors text-ink placeholder:text-slate/50 focus:outline-none ${
+      hasError
+        ? "border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+        : "border-mist bg-white focus:border-signal-teal focus:ring-1 focus:ring-signal-teal"
+    }`;
   };
 
   const constructMailtoUrl = () => {
@@ -55,7 +191,7 @@ export default function ContactPage() {
       `Phone: ${formData.phone || "N/A"}\n` +
       `Drug License No.: ${formData.drug_license || "Not provided"}\n` +
       `GST No.: ${formData.gst_number || "Not provided"}\n` +
-      `Products of Interest: ${selectedProducts.length > 0 ? selectedProducts.join(", ") : "General Enquiry / All Products"}\n\n` +
+      `Products of Interest: ${selectedProducts.length > 0 ? selectedProducts.join(", ") : "General Enquiry"}\n\n` +
       `Message / Requirements:\n${formData.message || "None provided"}\n`
     );
     return `mailto:contact@amibapharmaceuticals.com?subject=${subject}&body=${body}`;
@@ -63,6 +199,20 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmittedAttempted(true);
+
+    const validationErrors = validateForm(formData, selectedProducts);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      const firstErrorKey = Object.keys(validationErrors)[0];
+      const element = document.getElementById(firstErrorKey);
+      if (element) {
+        element.focus();
+      }
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage(null);
 
@@ -71,13 +221,10 @@ export default function ContactPage() {
       "Contact Person": formData.contact_person,
       "Email": formData.email,
       "Phone": formData.phone,
-      "Drug License No": formData.drug_license || "Not provided",
-      "GST No": formData.gst_number || "Not provided",
-      "Products of Interest":
-        selectedProducts.length > 0
-          ? selectedProducts.join(", ")
-          : "General Enquiry / All Products",
-      "Message": formData.message || "No additional comments",
+      "Drug License No": formData.drug_license.trim() || "Not provided",
+      "GST No": formData.gst_number.trim() || "Not provided",
+      "Products of Interest": selectedProducts.join(", "),
+      "Message": formData.message.trim() || "No additional comments",
       _replyto: formData.email,
       _subject: `New Institutional Quote Request: ${formData.company_name} (${formData.contact_person})`,
       _template: "table",
@@ -102,7 +249,6 @@ export default function ContactPage() {
       if (response.ok && (result.success === "true" || result.success === true)) {
         setSubmitted(true);
       } else if (result.message && result.message.includes("Activation")) {
-        // FormSubmit sent the one-time activation confirmation to contact@amibapharmaceuticals.com
         setSubmitted(true);
       } else {
         throw new Error(result.message || "Failed to submit form.");
@@ -118,7 +264,7 @@ export default function ContactPage() {
 
   if (submitted) {
     return (
-      <section className="pt-24 sm:pt-32 pb-16 sm:pb-24 bg-paper">
+      <section className="pt-10 sm:pt-16 pb-16 sm:pb-24 bg-paper">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="w-20 h-20 rounded-full bg-signal-teal/10 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 size={40} className="text-signal-teal" />
@@ -139,7 +285,7 @@ export default function ContactPage() {
 
   return (
     <>
-      <section className="pt-24 sm:pt-32 pb-16 sm:pb-24 bg-paper">
+      <section className="pt-10 sm:pt-16 pb-16 sm:pb-24 bg-paper">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionReveal>
             <div className="text-center mb-16">
@@ -160,7 +306,7 @@ export default function ContactPage() {
             {/* Form */}
             <div className="lg:col-span-3">
               <SectionReveal>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} noValidate className="space-y-6">
                   {errorMessage && (
                     <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex flex-col gap-3">
                       <div className="flex items-start gap-2">
@@ -189,12 +335,18 @@ export default function ContactPage() {
                         type="text"
                         id="company_name"
                         name="company_name"
-                        required
                         value={formData.company_name}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
+                        onBlur={() => handleBlur("company_name")}
+                        className={getInputClassName("company_name")}
                         placeholder="Your institution name"
                       />
+                      {showError("company_name") && (
+                        <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                          <AlertCircle size={13} className="flex-shrink-0" />
+                          <span>{errors.company_name}</span>
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label
@@ -207,12 +359,18 @@ export default function ContactPage() {
                         type="text"
                         id="contact_person"
                         name="contact_person"
-                        required
                         value={formData.contact_person}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
+                        onBlur={() => handleBlur("contact_person")}
+                        className={getInputClassName("contact_person")}
                         placeholder="Full name"
                       />
+                      {showError("contact_person") && (
+                        <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                          <AlertCircle size={13} className="flex-shrink-0" />
+                          <span>{errors.contact_person}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -233,9 +391,16 @@ export default function ContactPage() {
                         name="drug_license"
                         value={formData.drug_license}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
+                        onBlur={() => handleBlur("drug_license")}
+                        className={getInputClassName("drug_license")}
                         placeholder="e.g., XX-XXXXX"
                       />
+                      {showError("drug_license") && (
+                        <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                          <AlertCircle size={13} className="flex-shrink-0" />
+                          <span>{errors.drug_license}</span>
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label
@@ -253,9 +418,16 @@ export default function ContactPage() {
                         name="gst_number"
                         value={formData.gst_number}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
+                        onBlur={() => handleBlur("gst_number")}
+                        className={getInputClassName("gst_number")}
                         placeholder="e.g., 27XXXXXXXXX1Z5"
                       />
+                      {showError("gst_number") && (
+                        <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                          <AlertCircle size={13} className="flex-shrink-0" />
+                          <span>{errors.gst_number}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -271,12 +443,18 @@ export default function ContactPage() {
                         type="email"
                         id="email"
                         name="email"
-                        required
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
+                        onBlur={() => handleBlur("email")}
+                        className={getInputClassName("email")}
                         placeholder="procurement@hospital.com"
                       />
+                      {showError("email") && (
+                        <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                          <AlertCircle size={13} className="flex-shrink-0" />
+                          <span>{errors.email}</span>
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label
@@ -289,19 +467,25 @@ export default function ContactPage() {
                         type="tel"
                         id="phone"
                         name="phone"
-                        required
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors"
-                        placeholder="+91 XXXXX XXXXX"
+                        onBlur={() => handleBlur("phone")}
+                        className={getInputClassName("phone")}
+                        placeholder="+91 98765 43210"
                       />
+                      {showError("phone") && (
+                        <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                          <AlertCircle size={13} className="flex-shrink-0" />
+                          <span>{errors.phone}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   {/* Product Selection */}
-                  <div>
+                  <div id="products">
                     <label className="block text-sm font-medium text-ink mb-3">
-                      Products of Interest
+                      Products of Interest *
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {products.map((p) => (
@@ -311,7 +495,7 @@ export default function ContactPage() {
                           onClick={() => toggleProduct(p.name)}
                           className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                             selectedProducts.includes(p.name)
-                              ? "bg-signal-teal text-white"
+                              ? "bg-signal-teal text-white shadow-xs"
                               : "bg-mist/50 text-slate hover:bg-mist"
                           }`}
                         >
@@ -319,6 +503,12 @@ export default function ContactPage() {
                         </button>
                       ))}
                     </div>
+                    {showError("products") && (
+                      <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                        <AlertCircle size={13} className="flex-shrink-0" />
+                        <span>{errors.products}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -326,7 +516,10 @@ export default function ContactPage() {
                       htmlFor="message"
                       className="block text-sm font-medium text-ink mb-2"
                     >
-                      Message
+                      Message{" "}
+                      <span className="text-slate/60 text-xs font-normal">
+                        (Optional)
+                      </span>
                     </label>
                     <textarea
                       id="message"
@@ -334,9 +527,16 @@ export default function ContactPage() {
                       rows={4}
                       value={formData.message}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-xl border border-mist bg-white text-ink placeholder:text-slate/50 focus:outline-none focus:border-signal-teal focus:ring-1 focus:ring-signal-teal transition-colors resize-none"
+                      onBlur={() => handleBlur("message")}
+                      className={getInputClassName("message")}
                       placeholder="Tell us about your requirements, estimated volumes, or any specific questions..."
                     />
+                    {showError("message") && (
+                      <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                        <AlertCircle size={13} className="flex-shrink-0" />
+                        <span>{errors.message}</span>
+                      </p>
+                    )}
                   </div>
 
                   <p className="text-xs text-slate">
@@ -378,9 +578,9 @@ export default function ContactPage() {
             </div>
 
             {/* Contact Info Sidebar */}
-            <div className="lg:col-span-2 order-first lg:order-last">
+            <div className="lg:col-span-2">
               <SectionReveal>
-                <div className="glass-card p-6 sm:p-8 mb-6 sm:mb-8">
+                <div className="glass-card p-6 sm:p-8">
                   <h3 className="text-display-md !text-lg text-ink mb-6">
                     Contact Information
                   </h3>
@@ -442,17 +642,6 @@ export default function ContactPage() {
                       </div>
                     </li>
                   </ul>
-                </div>
-
-                {/* Map placeholder */}
-                <div className="rounded-xl overflow-hidden border border-mist bg-mist/30 aspect-[4/3] flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin size={32} className="text-slate/30 mx-auto mb-2" />
-                    <p className="text-xs text-slate">
-                      {/* TODO: REPLACE — Embed a real static map */}
-                      Map placeholder — embed Google Maps static image
-                    </p>
-                  </div>
                 </div>
               </SectionReveal>
             </div>

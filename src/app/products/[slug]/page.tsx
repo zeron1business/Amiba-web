@@ -221,7 +221,7 @@ export default async function ProductDetailPage({
       />
 
       {/* Breadcrumb */}
-      <section className="pt-20 sm:pt-28 pb-4 bg-paper">
+      <section className="pt-8 sm:pt-10 pb-4 bg-paper">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href="/products"

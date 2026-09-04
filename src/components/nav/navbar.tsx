@@ -69,14 +69,14 @@ export function Navbar() {
 
   return (
     <>
+      <AnnouncementBar />
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200 flex flex-col ${
+        className={`sticky top-0 left-0 right-0 z-50 transition-colors duration-200 flex flex-col ${
           showBackground
             ? "bg-paper/90 backdrop-blur-md border-b border-mist/80 shadow-xs"
             : "bg-transparent"
         }`}
       >
-        <AnnouncementBar />
         <nav className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center group">

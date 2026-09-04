@@ -9,7 +9,7 @@ export function Hero() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-clinical-navy">
+    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-clinical-navy -mt-16 sm:-mt-20 pt-16 sm:pt-20">
       <div className="absolute inset-0 z-0">
         <video
           autoPlay

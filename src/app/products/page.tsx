@@ -14,7 +14,7 @@ export default function ProductsPage() {
   return (
     <>
       {/* Header */}
-      <section className="pt-24 sm:pt-32 pb-8 sm:pb-12 bg-paper">
+      <section className="pt-10 sm:pt-16 pb-8 sm:pb-12 bg-paper">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionReveal>
             <div className="text-center">
