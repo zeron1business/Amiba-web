@@ -108,7 +108,7 @@ export const products: Product[] = [
       {
         name: "Ibator 20",
         composition: "Atorvastatin Tablets I.P. 20 mg",
-        image: "/images/products/ibator20.png",
+        image: "/images/products/Ibator20.png",
       },
       {
         name: "Ibator 40",
