@@ -170,13 +170,13 @@ export const products: Product[] = [
     relatedSlugs: ["amitriba-lc"],
   },
   {
-    slug: "ambifeb-40",
-    name: "Ambifeb 40",
+    slug: "amifeb-40",
+    name: "Amifeb 40",
     category: "Gout & Hyperuricemia",
     shortDescription:
       "Effective uric acid lowering therapy for the chronic management of hyperuricemia.",
     longDescription:
-      "Ambifeb 40 contains Febuxostat 40mg, a potent, non-purine selective inhibitor of xanthine oxidase. It is highly effective in reducing serum uric acid levels in patients with gout and hyperuricemia, offering a safer alternative for patients with mild-to-moderate renal impairment compared to traditional therapies.",
+      "Amifeb 40 contains Febuxostat 40mg, a potent, non-purine selective inhibitor of xanthine oxidase. It is highly effective in reducing serum uric acid levels in patients with gout and hyperuricemia, offering a safer alternative for patients with mild-to-moderate renal impairment compared to traditional therapies.",
     composition: "Febuxostat 40 mg Tablets",
     packSize: "10 x 10 tablets (strip pack)",
     moq: "50 boxes",
